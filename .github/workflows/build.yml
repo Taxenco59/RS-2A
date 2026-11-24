@@ -1,11 +1,11 @@
-name: Build RS-2A VST3 (Windows)
+name: Build RS-2A (Windows + macOS)
 
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  build:
+  windows:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -21,3 +21,32 @@ jobs:
         with:
           name: RS-2A-VST3-Windows
           path: build/RS2A_artefacts/Release/VST3/RS-2A.vst3
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --target RS2A_AU RS2A_VST3 --parallel 4
+
+      - name: Sign and package
+        run: |
+          mkdir out
+          AU=$(find build -maxdepth 6 -name "RS-2A.component" | head -n1)
+          VST=$(find build -maxdepth 6 -name "RS-2A.vst3" | head -n1)
+          echo "AU: $AU"
+          echo "VST3: $VST"
+          codesign --force --deep -s - "$AU"
+          codesign --force --deep -s - "$VST"
+          ditto -c -k --keepParent "$AU" out/RS-2A-AU.zip
+          ditto -c -k --keepParent "$VST" out/RS-2A-VST3-mac.zip
+
+      - name: Upload AU and VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: RS-2A-macOS
+          path: out/*.zip
