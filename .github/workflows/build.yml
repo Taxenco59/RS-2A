@@ -23,7 +23,7 @@ jobs:
           path: build/RS2A_artefacts/Release/VST3/RS-2A.vst3
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
