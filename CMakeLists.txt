@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Runtime de MSVC enlazado estáticamente: el plugin no necesita instalar Visual C++ Redistributable
+# macOS: binario universal (Apple Silicon + Intel)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
+set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+
+# Windows: runtime de MSVC enlazado estáticamente (sin Visual C++ Redistributable)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 project(RS2A VERSION 1.0.0)
@@ -14,11 +18,17 @@ FetchContent_Declare(JUCE
     GIT_SHALLOW    ON)
 FetchContent_MakeAvailable(JUCE)
 
+if(APPLE)
+    set(RS2A_FORMATS VST3 AU Standalone)
+else()
+    set(RS2A_FORMATS VST3 Standalone)
+endif()
+
 juce_add_plugin(RS2A
     COMPANY_NAME            "RS Audio"
     PLUGIN_MANUFACTURER_CODE RsAu
     PLUGIN_CODE             Rs2a
-    FORMATS                 VST3 Standalone
+    FORMATS                 ${RS2A_FORMATS}
     PRODUCT_NAME            "RS-2A"
     IS_SYNTH                FALSE
     NEEDS_MIDI_INPUT        FALSE
@@ -26,6 +36,7 @@ juce_add_plugin(RS2A
     IS_MIDI_EFFECT          FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
     VST3_CATEGORIES         Fx Dynamics
+    AU_MAIN_TYPE            kAudioUnitType_Effect
     BUNDLE_ID               com.rsaudio.rs2a)
 
 target_sources(RS2A PRIVATE
